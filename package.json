@@ -1,0 +1,34 @@
+{
+  "name": "proximity_service",
+  "version": "0.0.0",
+  "description": "Discover nearby places",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start:dev": "npx nodemon"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cbgradschool/proximity_service.git"
+  },
+  "author": "Samuel Joli",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/cbgradschool/proximity_service/issues"
+  },
+  "homepage": "https://github.com/cbgradschool/proximity_service#readme",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.44.0",
+    "@typescript-eslint/parser": "^5.44.0",
+    "eslint": "^8.28.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-airbnb-typescript": "^17.0.0",
+    "eslint-plugin-import": "^2.26.0",
+    "nodemon": "^2.0.20",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.9.3"
+  },
+  "dependencies": {
+    "@types/node": "^18.11.9"
+  }
+}
