@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/cbgradschool/proximity_service#readme",
   "devDependencies": {
+    "@hapi/lab": "^25.0.1",
     "@typescript-eslint/eslint-plugin": "^5.44.0",
     "@typescript-eslint/parser": "^5.44.0",
     "eslint": "^8.28.0",
@@ -29,6 +30,7 @@
     "typescript": "^4.9.3"
   },
   "dependencies": {
+    "@hapi/hapi": "^21.0.0",
     "@types/node": "^18.11.9"
   }
 }
