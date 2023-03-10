@@ -1,55 +1,51 @@
-title: "[General] "
-labels: ["General Introduction"]
+title: "(RFC Title)"
+labels: ["research", "draft"]
 body:
   - type: markdown
     attributes:
       value: |
-        This is text that will show up in the template!
-  - type: textarea
-    id: improvements
-    attributes:
-      label: Top 3 improvements
-      description: "What are the top 3 improvements we could make to this project?"
-      value: |
-        1.
-        2.
-        3.
-        ...
-      render: bash
-    validations:
-      required: true
+        > [**Guideline**](https://github.com/cbgradschool/.github/wiki/RFC-Guideline)
   - type: markdown
     attributes:
       value: |
-        ## Markdown header
-        And some more markdown
+        ## Research
+
   - type: input
-    id: has-id
+    id: reviewed-by
     attributes:
-      label: Suggestions
-      description: A description about suggestions to help you
+      label: "To be reviewed by:"
+      description: "A comma separated list of github username handles."
+      placeholder: "@samueljoli"
     validations:
       required: true
-  - type: dropdown
-    id: download
+  - type: input
+    id: related-to
     attributes:
-      label: Which area of this project could be most improved?
-      options:
-        - Documentation
-        - Pull request review time
-        - Bug fix time
-        - Release cadence
+      label: "Related to issue(s):"
+      description: "A comma separated list of github issues."
+      placeholder: "#1"
     validations:
       required: true
   - type: checkboxes
+    id: changes
     attributes:
-      label: Check that box!
+      label: What type of change is this introducing?
+      description: You may select more than one.
       options:
-        - label: This one!
-          required: true
-        - label: I won't stop you if you check this one, too
-  - type: markdown
+        - label: New feature
+        - label: New subsystem
+        - label: Change to an existing API
+  - type: textarea
+    id: problem
     attributes:
-      value: |
-        ### The thrilling conclusion
-        _to our template_
+      label: Problem
+      description: "What is this proposal solving or introducing? Why does the problem or opportunity matter? How does the problem or opportunity affect the user?"
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Solution
+      description: "Describe your solution and how it’s going to solve the problem or introduce the opportunity. This is likely the largest section of your proposal and might even include some high-level diagrams if you are proposing code changes. While all important aspects need to be covered, also keep in mind that shorter documents are more likely to be read."
+    validations:
+      required: true
