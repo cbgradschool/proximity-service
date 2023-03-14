@@ -10,12 +10,8 @@ async fn health_check() -> Result<(), ()> {
     Ok(())
 }
 
-pub fn make_server() -> Server<AddrIncoming, IntoMakeService<axum::Router>> {
-    let app = Router::new()
-        .route("/health_check", get(health_check));
+pub fn make_server(addr: &SocketAddr) -> Server<AddrIncoming, IntoMakeService<axum::Router>> {
+    let app = Router::new().route("/health_check", get(health_check));
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], 8000));
-
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
+    axum::Server::bind(addr).serve(app.into_make_service())
 }
