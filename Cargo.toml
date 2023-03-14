@@ -1,8 +1,28 @@
 [package]
-name = "ps"
+name = "proximity_service"
+authors = ["Samuel Joli"]
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+path = "src/main.rs"
+name = "proximity_service"
+
 [dependencies]
+axum = "0.6.11"
+hyper = { version = "0.14", features = ["full"] }
+tokio = { version = "1.0", features = ["full"] }
+# mime = "0.3"
+# serde_json = "1.0"
+# tower-http = { version = "0.4.0", features = ["trace"] }
+# tracing = "0.1"
+# tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[dev-dependencies]
+tower = { version = "0.4", features = ["util"] }
+reqwest = { version = "0.11", features = ["json"] }
