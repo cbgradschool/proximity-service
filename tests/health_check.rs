@@ -2,7 +2,7 @@ mod utils;
 
 #[tokio::test]
 async fn test_health_check() {
-    let address = utils::spawn_app();
+    let address = utils::spawn_app().await;
 
     let client = reqwest::Client::new();
 

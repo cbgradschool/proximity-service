@@ -1,14 +1,26 @@
 use axum::{
-    routing::{get, IntoMakeService},
-    Router, Server,
+    routing::IntoMakeService,
+    Router, Server, Extension,
 };
 use hyper::server::conn::AddrIncoming;
-use std::net::SocketAddr;
+use sqlx::PgPool;
+use std::{net::SocketAddr, sync::Arc};
 
-mod routes;
+mod api;
 
-pub fn make_server(addr: &SocketAddr) -> Server<AddrIncoming, IntoMakeService<axum::Router>> {
-    let app = Router::new().route("/health_check", get(routes::get_health_check));
+pub use api::owner::ApiPayload;
+pub use api::owner::CreateOwner;
+
+pub struct AppState {
+    db: PgPool
+}
+
+pub fn serve(addr: &SocketAddr, db: PgPool) -> Server<AddrIncoming, IntoMakeService<axum::Router>> {
+
+    let app = Router::new()
+        .merge(api::health_check::router())
+        .merge(api::owner::router())
+        .layer(Extension(Arc::new(AppState{db})));
 
     axum::Server::bind(addr).serve(app.into_make_service())
 }

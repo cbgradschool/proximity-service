@@ -1,0 +1,32 @@
+# Avoid inheriting SHELL from the env.
+SHELL = /bin/sh
+
+WAIT_FOR_IT_URL = https://raw.githubusercontent.com/eficode/wait-for/v2.2.3/wait-for
+
+.PHONY: init_db
+init_db:
+	docker run \
+		--name ${DB_CONTAINER_NAME} \
+		-e POSTGRES_USER=${DB_USER} \
+		-e POSTGRES_PASSWORD=${DB_PASSWORD} \
+		-e POSTGRES_DB=${DB_NAME} \
+		-h POSTGRES_HOST=${DB_HOST} \
+		-p ${DB_PORT}:5432 \
+		-d postgres \
+		postgres -N 1000
+
+.PHONY: ping_db
+ping_db:
+	curl ${WAIT_FOR_IT_URL} | sh -s -- ${DB_HOST}:${DB_PORT} -- echo Database is up
+
+.PHONY: run_migrations
+run_migrations:
+ifeq (, $(shell which sqlx))
+	cargo install sqlx-cli --no-default-features --features rustls,postgres; sqlx migrate run --database-url ${DATABASE_URL}
+else
+	sqlx migrate run --database-url ${DATABASE_URL}
+endif
+
+.PHONY: clean_up
+clean_up:
+	@docker stop ${DB_CONTAINER_NAME}; docker rm ${DB_CONTAINER_NAME}
