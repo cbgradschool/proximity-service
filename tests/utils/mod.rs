@@ -1,6 +1,6 @@
-use std::net::TcpListener;
-use std::env;
 use dotenvy::dotenv;
+use std::env;
+use std::net::TcpListener;
 
 use sqlx::postgres::PgPoolOptions;
 

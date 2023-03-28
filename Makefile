@@ -18,8 +18,8 @@ run: export DATABASE_URL      ?= postgres://${DB_USER}:${DB_PASSWORD}@localhost:
 run: init_db ping_db run_migrations
 
 .PHONY: test-ci
-test: export DB_PORT           ?= 5432
-test: export DB_CONTAINER_NAME ?= postgres_test
-test: export DATABASE_URL      ?= postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/${DB_NAME}
-test: run_migrations
+test-ci: export DB_PORT           ?= 5432
+test-ci: export DB_CONTAINER_NAME ?= postgres_test
+test-ci: export DATABASE_URL      ?= postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/${DB_NAME}
+test-ci: run_migrations
 	cargo test

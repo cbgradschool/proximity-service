@@ -1,7 +1,4 @@
-use proximity_service::{
-    CreateOwner,
-    ApiPayload
-};
+use proximity_service::{ApiPayload, CreateOwner};
 
 mod utils;
 
@@ -13,8 +10,8 @@ async fn test_post_owner() {
         payload: CreateOwner {
             name: String::from("Me"),
             email: String::from("solidsnake@sonsofliberty.om"),
-            password: String::from("lalilulelo")
-        }
+            password: String::from("lalilulelo"),
+        },
     };
 
     let client = reqwest::Client::new();

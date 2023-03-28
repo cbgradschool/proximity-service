@@ -1,7 +1,4 @@
-use axum::{
-    routing::get,
-    Router,
-};
+use axum::{routing::get, Router};
 
 pub async fn get_health_check() -> Result<(), ()> {
     // Returns an empty response
@@ -9,6 +6,5 @@ pub async fn get_health_check() -> Result<(), ()> {
 }
 
 pub fn router() -> Router {
-    Router::new()
-        .route("/health_check", get(get_health_check))
+    Router::new().route("/health_check", get(get_health_check))
 }

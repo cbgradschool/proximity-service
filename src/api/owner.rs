@@ -1,17 +1,16 @@
+use crate::AppState;
 use axum::{
+    response::IntoResponse,
     routing::{get, post},
-    Json,
-    Router,
-    Extension, response::{IntoResponse},
+    Extension, Json, Router,
 };
 use hyper::StatusCode;
 use serde::{Deserialize, Serialize};
-use crate::AppState;
 use std::sync::Arc;
 
 #[derive(Deserialize, Serialize)]
 pub struct ApiPayload<T> {
-    pub payload: T
+    pub payload: T,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -25,7 +24,10 @@ pub async fn get_owner() {
     // implement me
 }
 
-pub async fn post_owner(state: Extension<Arc<AppState>>, Json(req): Json<ApiPayload<CreateOwner>>) -> impl IntoResponse {
+pub async fn post_owner(
+    state: Extension<Arc<AppState>>,
+    Json(req): Json<ApiPayload<CreateOwner>>,
+) -> impl IntoResponse {
     let _owner_id = sqlx::query_scalar!(
         r#"insert into "owners" (name, email, password) values ($1, $2, $3)"#,
         req.payload.name,

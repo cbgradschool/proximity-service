@@ -1,8 +1,8 @@
+use dotenvy::dotenv;
 use proximity_service::serve;
 use sqlx::postgres::PgPoolOptions;
-use std::net::TcpListener;
-use dotenvy::dotenv;
 use std::env;
+use std::net::TcpListener;
 
 #[tokio::main]
 async fn main() {
