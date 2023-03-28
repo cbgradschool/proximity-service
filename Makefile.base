@@ -27,6 +27,6 @@ else
 	sqlx migrate run --database-url ${DATABASE_URL}
 endif
 
-.PHONY: clean_up
-clean_up:
+.PHONY: clean
+clean:
 	@docker stop ${DB_CONTAINER_NAME}; docker rm ${DB_CONTAINER_NAME}

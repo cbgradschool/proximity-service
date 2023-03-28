@@ -23,3 +23,7 @@ test-ci: export DB_CONTAINER_NAME ?= postgres_test
 test-ci: export DATABASE_URL      ?= postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/${DB_NAME}
 test-ci: run_migrations
 	cargo test
+
+.PHONY: clean_up
+clean_up: export DB_CONTAINER_NAME ?= postgres
+clean_up: clean

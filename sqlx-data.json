@@ -1,0 +1,17 @@
+{
+  "db": "PostgreSQL",
+  "ae538d058126b4586afa5d327221779d35bbb3e5135eb11ca7b3844a6ef0bbaa": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Varchar",
+          "Varchar"
+        ]
+      }
+    },
+    "query": "insert into \"owners\" (name, email, password) values ($1, $2, $3)"
+  }
+}
