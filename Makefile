@@ -27,3 +27,11 @@ test-ci: run_migrations
 .PHONY: clean_up
 clean_up: export DB_CONTAINER_NAME ?= postgres
 clean_up: clean
+
+.PHONY: watch
+watch:
+	cargo watch -x check -- make test
+
+.PHONY: test-cov-ci
+test-cov-ci: run_migrations
+	cargo tarpaulin --verbose --workspace

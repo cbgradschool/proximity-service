@@ -76,6 +76,19 @@ jobs:
   coverage:
     name: Code coverage
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: proximity_service
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     container:
       image: xd009642/tarpaulin
       options: --security-opt seccomp=unconfined
@@ -83,5 +96,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Generate code coverage
-        run: |
-          cargo tarpaulin --verbose --workspace
+        env:
+          DATABASE_URL: postgres://postgres:password@postgres:5432/proximity_service
+          POSTGRES_HOST: postgres
+          POSTGRES_PORT: 5432
+        run: make test-cov-ci
