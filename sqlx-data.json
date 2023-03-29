@@ -1,9 +1,17 @@
 {
   "db": "PostgreSQL",
-  "ae538d058126b4586afa5d327221779d35bbb3e5135eb11ca7b3844a6ef0bbaa": {
+  "5d22e4b7b512cdc897ea2ba4d13d2f619c3bd53dcd8b2725e13a51f155455ef4": {
     "describe": {
-      "columns": [],
-      "nullable": [],
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        }
+      ],
+      "nullable": [
+        false
+      ],
       "parameters": {
         "Left": [
           "Varchar",
@@ -12,6 +20,6 @@
         ]
       }
     },
-    "query": "insert into \"owners\" (name, email, password) values ($1, $2, $3)"
+    "query": "insert into \"owners\" (name, email, password) values ($1, $2, $3) returning id;"
   }
 }

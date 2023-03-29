@@ -1,4 +1,5 @@
 use proximity_service::{ApiPayload, CreateOwner};
+use std::collections::HashMap;
 
 mod utils;
 
@@ -21,7 +22,11 @@ async fn test_post_owner() {
         .json(&new_owner)
         .send()
         .await
-        .expect("Failed to execute request");
+        .unwrap();
 
     assert!(response.status().is_success());
+
+    let json_response = response.json::<HashMap<String, i32>>().await.unwrap();
+
+    assert!(json_response.contains_key("id"));
 }

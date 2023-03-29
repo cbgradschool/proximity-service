@@ -20,6 +20,11 @@ pub struct CreateOwner {
     pub password: String,
 }
 
+#[derive(Deserialize, Serialize)]
+pub struct CreateOwnerResponse {
+    pub id: i32,
+}
+
 pub async fn get_owner() {
     // implement me
 }
@@ -28,20 +33,17 @@ pub async fn post_owner(
     state: Extension<Arc<AppState>>,
     Json(req): Json<ApiPayload<CreateOwner>>,
 ) -> impl IntoResponse {
-    let _owner_id = sqlx::query_scalar!(
-        r#"insert into "owners" (name, email, password) values ($1, $2, $3)"#,
+    let insert_id = sqlx::query_scalar!(
+        r#"insert into "owners" (name, email, password) values ($1, $2, $3) returning id;"#,
         req.payload.name,
         req.payload.email,
         req.payload.password,
     )
     .fetch_one(&state.db)
-    .await;
+    .await
+    .unwrap();
 
-    let response = CreateOwner {
-        name: req.payload.name,
-        email: req.payload.email,
-        password: req.payload.password,
-    };
+    let response = CreateOwnerResponse { id: insert_id };
 
     (StatusCode::CREATED, Json(response))
 }
