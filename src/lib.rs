@@ -5,8 +5,7 @@ use std::{net::SocketAddr, sync::Arc};
 
 mod api;
 
-pub use api::owner::ApiPayload;
-pub use api::owner::CreateOwner;
+pub use api::owner::{ApiPayload, CreateOwner, CreateOwnerResponse, Owner};
 
 pub struct AppState {
     db: PgPool,

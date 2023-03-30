@@ -2,9 +2,9 @@ use dotenvy::dotenv;
 use std::env;
 use std::net::TcpListener;
 
-use sqlx::postgres::PgPoolOptions;
+use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
-pub async fn spawn_app() -> String {
+pub async fn spawn_app() -> (String, Pool<Postgres>) {
     dotenv().ok();
 
     let db_connection_url = env::var("DATABASE_URL").expect("Database connection url not found.");
@@ -21,9 +21,35 @@ pub async fn spawn_app() -> String {
 
     let port = addr.port();
 
-    let server = proximity_service::serve(&addr, db);
+    let server = proximity_service::serve(&addr, db.clone());
 
     tokio::spawn(server);
 
-    format!("http://127.0.0.1:{}", port)
+    (format!("http://127.0.0.1:{}", port), db)
+}
+
+#[allow(dead_code)] // bug: https://github.com/rust-lang/rust/issues/46379
+pub async fn test_setup(db: &Pool<Postgres>) -> i32 {
+    /*! Seeds database with a single "Owner" record */
+
+    let insert_id = sqlx::query_scalar!(
+        r#"insert into "owners" (name, email, password) values ($1, $2, $3) returning id;"#,
+        "David Hayter",
+        "solidsnake@sonsofliberty.com",
+        "lalilulelo"
+    )
+    .fetch_one(db)
+    .await
+    .unwrap();
+
+    insert_id
+}
+
+#[allow(dead_code)] // bug: https://github.com/rust-lang/rust/issues/46379
+pub async fn test_teardown(id: i32, db: &Pool<Postgres>) -> Result<(), ()> {
+    let _delete = sqlx::query_scalar!(r#"delete from "owners" where id = $1"#, id,)
+        .fetch_one(db)
+        .await;
+
+    Ok(())
 }

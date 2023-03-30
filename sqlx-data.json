@@ -1,5 +1,37 @@
 {
   "db": "PostgreSQL",
+  "06b77062dbe7a0ad27bb0eab5a5af91f000a7ffcce6c96924547d457d871021c": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "email",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      }
+    },
+    "query": "select id, name, email from \"owners\" where id = $1;"
+  },
   "5d22e4b7b512cdc897ea2ba4d13d2f619c3bd53dcd8b2725e13a51f155455ef4": {
     "describe": {
       "columns": [
