@@ -53,5 +53,17 @@
       }
     },
     "query": "insert into \"owners\" (name, email, password) values ($1, $2, $3) returning id;"
+  },
+  "a90952ab311aed4174d62e91afce3b30ca41cb08bdf2c097fc92fa0b2da56f33": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      }
+    },
+    "query": "delete from \"owners\" where id = $1"
   }
 }
