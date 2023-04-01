@@ -2,7 +2,7 @@ use crate::AppState;
 use axum::{
     extract::Path,
     response::IntoResponse,
-    routing::{get, post},
+    routing::{delete, get, post},
     Extension, Json, Router,
 };
 use hyper::StatusCode;
@@ -49,7 +49,7 @@ pub async fn get_owner(Path(id): Path<i32>, state: Extension<Arc<AppState>>) -> 
     )
 }
 
-pub async fn post_owner(
+pub async fn creat_owner(
     state: Extension<Arc<AppState>>,
     Json(req): Json<ApiPayload<CreateOwner>>,
 ) -> impl IntoResponse {
@@ -68,8 +68,20 @@ pub async fn post_owner(
     (StatusCode::CREATED, Json(response))
 }
 
+pub async fn delete_owner(
+    Path(id): Path<i32>,
+    state: Extension<Arc<AppState>>,
+) -> impl IntoResponse {
+    let _delete = sqlx::query_scalar!(r#"delete from "owners" where id = $1"#, id,)
+        .fetch_one(&state.db)
+        .await;
+
+    StatusCode::NO_CONTENT
+}
+
 pub fn router() -> Router {
     Router::new()
         .route("/owner/:id", get(get_owner))
-        .route("/owner", post(post_owner))
+        .route("/owner", post(creat_owner))
+        .route("/owner/:id", delete(delete_owner))
 }
