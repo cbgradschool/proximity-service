@@ -2,6 +2,12 @@ use axum::{routing::IntoMakeService, Extension, Router, Server};
 use hyper::server::conn::AddrIncoming;
 use sqlx::PgPool;
 use std::{net::SocketAddr, sync::Arc};
+use tower::ServiceBuilder;
+use tower_http::{
+    trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
+    LatencyUnit,
+};
+use tracing::Level;
 
 mod api;
 
@@ -15,7 +21,20 @@ pub fn serve(addr: &SocketAddr, db: PgPool) -> Server<AddrIncoming, IntoMakeServ
     let app = Router::new()
         .merge(api::health_check::router())
         .merge(api::owner::router())
-        .layer(Extension(Arc::new(AppState { db })));
+        .layer(
+            ServiceBuilder::new()
+                .layer(
+                    TraceLayer::new_for_http()
+                        .make_span_with(DefaultMakeSpan::new().include_headers(true))
+                        .on_request(DefaultOnRequest::new().level(Level::INFO))
+                        .on_response(
+                            DefaultOnResponse::new()
+                                .level(Level::INFO)
+                                .latency_unit(LatencyUnit::Micros),
+                        ),
+                )
+                .layer(Extension(Arc::new(AppState { db }))),
+        );
 
     axum::Server::bind(addr).serve(app.into_make_service())
 }

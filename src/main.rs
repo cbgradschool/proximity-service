@@ -3,10 +3,18 @@ use proximity_service::serve;
 use sqlx::postgres::PgPoolOptions;
 use std::env;
 use std::net::TcpListener;
+use tracing::{info, Level};
+use tracing_subscriber::FmtSubscriber;
 
 #[tokio::main]
 async fn main() {
     dotenv().ok();
+
+    let subscriber = FmtSubscriber::builder()
+        .with_max_level(Level::TRACE)
+        .finish();
+
+    tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
 
     let db_connection_url = env::var("DATABASE_URL").expect("Database connection url not found.");
 
@@ -22,6 +30,8 @@ async fn main() {
         .unwrap();
 
     let server = serve(&addr, db);
+
+    info!("proximity_service server starting up...");
 
     server.await.unwrap()
 }
