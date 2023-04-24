@@ -1,10 +1,7 @@
-use proximity_service::{
-    serve,
-    Settings,
-};
+use proximity_service::{serve, Settings};
 use sqlx::postgres::PgPoolOptions;
 use std::net::TcpListener;
-use tracing::{info, Level};
+use tracing::{info, warn, Level};
 use tracing_subscriber::FmtSubscriber;
 
 #[tokio::main]
@@ -17,7 +14,6 @@ async fn main() {
 
     match Settings::new() {
         Ok(config) => {
-            print!("DB_URL >>> {}  <<", &config.database_url);
             let db = PgPoolOptions::new()
                 .max_connections(50)
                 .connect(&config.database_url)
@@ -34,11 +30,12 @@ async fn main() {
             info!("proximity_service server starting up...");
 
             server.await.unwrap()
-
-        },
-        Err(err) =>  {
-            info!("proximity_service has not been properly configured");
-            print!("error: {}", err)
+        }
+        Err(err) => {
+            warn!(
+                "proximity_service has not been properly configured. Error: {}",
+                err
+            );
         }
     }
 }

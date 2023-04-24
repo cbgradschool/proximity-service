@@ -17,12 +17,17 @@ pub use settings::Settings;
 
 pub use api::owner::{ApiPayload, CreateOwner, CreateOwnerResponse, Owner};
 
+#[allow(unused)]
 pub struct AppState {
     db: PgPool,
-    config: Settings
+    config: Settings,
 }
 
-pub fn serve(addr: &SocketAddr, db: PgPool, config: Settings) -> Server<AddrIncoming, IntoMakeService<axum::Router>> {
+pub fn serve(
+    addr: &SocketAddr,
+    db: PgPool,
+    config: Settings,
+) -> Server<AddrIncoming, IntoMakeService<axum::Router>> {
     let app = Router::new()
         .merge(api::health_check::router())
         .merge(api::owner::router())

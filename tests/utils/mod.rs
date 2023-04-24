@@ -34,8 +34,6 @@ pub async fn spawn_app() -> (String, Pool<Postgres>) {
 pub async fn test_setup(db: &Pool<Postgres>) -> i32 {
     /*! Seeds database with a single "Owner" record */
 
-    
-
     sqlx::query_scalar!(
         r#"insert into "owners" (name, email, password) values ($1, $2, $3) returning id;"#,
         "David Hayter",
