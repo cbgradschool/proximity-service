@@ -11,13 +11,18 @@ use tracing::Level;
 
 mod api;
 
+mod settings;
+
+pub use settings::Settings;
+
 pub use api::owner::{ApiPayload, CreateOwner, CreateOwnerResponse, Owner};
 
 pub struct AppState {
     db: PgPool,
+    config: Settings
 }
 
-pub fn serve(addr: &SocketAddr, db: PgPool) -> Server<AddrIncoming, IntoMakeService<axum::Router>> {
+pub fn serve(addr: &SocketAddr, db: PgPool, config: Settings) -> Server<AddrIncoming, IntoMakeService<axum::Router>> {
     let app = Router::new()
         .merge(api::health_check::router())
         .merge(api::owner::router())
@@ -33,7 +38,7 @@ pub fn serve(addr: &SocketAddr, db: PgPool) -> Server<AddrIncoming, IntoMakeServ
                                 .latency_unit(LatencyUnit::Micros),
                         ),
                 )
-                .layer(Extension(Arc::new(AppState { db }))),
+                .layer(Extension(Arc::new(AppState { db, config }))),
         );
 
     axum::Server::bind(addr).serve(app.into_make_service())

@@ -21,7 +21,9 @@ pub async fn spawn_app() -> (String, Pool<Postgres>) {
 
     let port = addr.port();
 
-    let server = proximity_service::serve(&addr, db.clone());
+    let settings = proximity_service::Settings::new().unwrap();
+
+    let server = proximity_service::serve(&addr, db.clone(), settings);
 
     tokio::spawn(server);
 
@@ -32,7 +34,9 @@ pub async fn spawn_app() -> (String, Pool<Postgres>) {
 pub async fn test_setup(db: &Pool<Postgres>) -> i32 {
     /*! Seeds database with a single "Owner" record */
 
-    let insert_id = sqlx::query_scalar!(
+    
+
+    sqlx::query_scalar!(
         r#"insert into "owners" (name, email, password) values ($1, $2, $3) returning id;"#,
         "David Hayter",
         "solidsnake@sonsofliberty.com",
@@ -40,9 +44,7 @@ pub async fn test_setup(db: &Pool<Postgres>) -> i32 {
     )
     .fetch_one(db)
     .await
-    .unwrap();
-
-    insert_id
+    .unwrap()
 }
 
 #[allow(dead_code)] // bug: https://github.com/rust-lang/rust/issues/46379

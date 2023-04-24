@@ -25,6 +25,8 @@ tower              = { version = "0.4", features = ["util"] }
 tower-http         = { version = "0.4", features = ["trace"] }
 tracing            = { version = "0.1.37" }
 tracing-subscriber = { version = "0.3.16" }
+config             = { version = "0.13.3" }
+serde_derive       = { version = "1.0.160" }
 
 [dependencies.sqlx]
 version = "0.6.2"
