@@ -16,7 +16,7 @@ run: export DB_PORT           ?= 5432
 run: export DB_CONTAINER_NAME ?= postgres
 run: export DATABASE_URL      ?= postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/${DB_NAME}
 run: init_db ping_db run_migrations
-	cargo run
+	cargo watch -x check -x run
 
 .PHONY: test-ci
 test-ci: export DB_PORT           ?= 5432

@@ -2,10 +2,13 @@ use config::{Config, ConfigError, Environment, File};
 use serde_derive::Deserialize;
 use std::env;
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[allow(unused)]
 pub struct Settings {
     pub database_url: String,
+    pub honeycomb_api_key: String,
+    pub honeycomb_dataset: String,
+    pub honeycomb_host: String,
 }
 
 impl Settings {
@@ -16,6 +19,8 @@ impl Settings {
         let s = Config::builder()
             // Load from defaults configs.
             .add_source(File::with_name("config/default"))
+            // Load from local configs. NOT CHECKED INTO VERSION CONTROL
+            .add_source(File::with_name("config/local").required(false))
             // Load from "env" based configs.
             .add_source(File::with_name(&format!("config/{}", run_mode)).required(false))
             // Load from ENVIRONMENT

@@ -1,1 +1,6 @@
 database_url = ""
+host = "127.0.0.1"
+port = 8080
+db_max_connections = 50
+honeycomb_dataset = "proximity_service"
+honeycomb_host = "https://api.honeycomb.io"
