@@ -37,13 +37,13 @@ async fn main() {
     tracing::subscriber::set_global_default(subscriber).unwrap();
 
     let db = PgPoolOptions::new()
-        .max_connections(50)
+        .max_connections(config.db_max_connections)
         .connect(&config.database_url)
         .await
         .unwrap();
 
-    let addr = TcpListener::bind("127.0.0.1:8080")
-        .expect("Failed to bind to port")
+    let addr = TcpListener::bind(format!("{}:{}", config.host, config.port))
+        .unwrap_or_else(|_| panic!("Failed to bind to PORT:{}", config.port))
         .local_addr()
         .unwrap();
 

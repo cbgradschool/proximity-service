@@ -5,7 +5,10 @@ use std::env;
 #[derive(Clone, Debug, Deserialize)]
 #[allow(unused)]
 pub struct Settings {
+    pub host: String,
+    pub port: u16,
     pub database_url: String,
+    pub db_max_connections: u32,
     pub honeycomb_api_key: String,
     pub honeycomb_dataset: String,
     pub honeycomb_host: String,
