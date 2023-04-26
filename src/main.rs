@@ -1,8 +1,9 @@
-use opentelemetry::{sdk::trace as sdktrace, trace::TraceError};
+use opentelemetry::{global::shutdown_tracer_provider, sdk::trace as sdktrace, trace::TraceError};
 use opentelemetry_otlp::WithExportConfig;
 use proximity_service::{serve, Settings};
 use sqlx::postgres::PgPoolOptions;
 use std::{collections::HashMap, net::TcpListener};
+use tokio::signal;
 use tracing::info;
 use tracing_subscriber::layer::SubscriberExt;
 
@@ -48,9 +49,19 @@ async fn main() {
 
     let server = serve(&addr, db, config);
 
-    server.await.unwrap();
+    tokio::spawn(async move {
+        server.await.unwrap();
 
-    info!("proximity_service server starting up...");
+        info!("proximity_service starting up...");
+    });
 
-    // shutdown_tracer_provider();
+    // Handle shutdown gracefully
+    match signal::ctrl_c().await {
+        Ok(()) => {
+            shutdown_tracer_provider();
+        }
+        Err(_) => {
+            shutdown_tracer_provider();
+        }
+    }
 }
