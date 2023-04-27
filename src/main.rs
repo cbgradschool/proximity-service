@@ -5,7 +5,7 @@ use sqlx::postgres::PgPoolOptions;
 use std::{collections::HashMap, net::TcpListener};
 use tokio::signal;
 use tracing::info;
-use tracing_subscriber::layer::SubscriberExt;
+use tracing_subscriber::{fmt, layer::SubscriberExt, registry::Registry};
 
 fn init_tracer(config: Settings) -> Result<sdktrace::Tracer, TraceError> {
     opentelemetry_otlp::new_pipeline()
@@ -30,9 +30,19 @@ async fn main() {
 
     let tracer = init_tracer(config.clone()).unwrap();
 
-    let telemetry = tracing_opentelemetry::layer().with_tracer(tracer);
-
-    let subscriber = tracing_subscriber::Registry::default().with(telemetry);
+    let subscriber = Registry::default()
+        .with(
+            // OpenTelemetry layer
+            tracing_opentelemetry::layer().with_tracer(tracer),
+        )
+        .with(
+            // Pretty print layer
+            fmt::layer()
+                .pretty()
+                .with_target(false)
+                .with_thread_ids(true)
+                .with_thread_names(true),
+        );
 
     tracing::subscriber::set_global_default(subscriber).unwrap();
 
@@ -50,9 +60,9 @@ async fn main() {
     let server = serve(&addr, db, config);
 
     tokio::spawn(async move {
-        server.await.unwrap();
-
         info!("proximity_service starting up...");
+
+        server.await.unwrap();
     });
 
     // Handle shutdown gracefully
