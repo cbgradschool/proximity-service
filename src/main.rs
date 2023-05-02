@@ -7,7 +7,7 @@ use tokio::signal;
 use tracing::info;
 use tracing_subscriber::{fmt, layer::SubscriberExt, registry::Registry};
 
-fn init_tracer(config: Settings) -> Result<sdktrace::Tracer, TraceError> {
+fn init_tracer(config: &Settings) -> Result<sdktrace::Tracer, TraceError> {
     opentelemetry_otlp::new_pipeline()
         .tracing()
         .with_exporter(
@@ -16,8 +16,11 @@ fn init_tracer(config: Settings) -> Result<sdktrace::Tracer, TraceError> {
                 .with_endpoint(format!("{}/v1/traces", config.honeycomb_host))
                 .with_http_client(reqwest::Client::default())
                 .with_headers(HashMap::from([
-                    ("x-honeycomb-dataset".into(), config.honeycomb_dataset),
-                    ("x-honeycomb-team".into(), config.honeycomb_api_key),
+                    (
+                        "x-honeycomb-dataset".into(),
+                        config.honeycomb_dataset.clone(),
+                    ),
+                    ("x-honeycomb-team".into(), config.honeycomb_api_key.clone()),
                 ]))
                 .with_timeout(std::time::Duration::from_secs(2)),
         ) // Replace with runtime::Tokio if using async main
@@ -28,7 +31,7 @@ fn init_tracer(config: Settings) -> Result<sdktrace::Tracer, TraceError> {
 async fn main() {
     let config = Settings::new().unwrap();
 
-    let tracer = init_tracer(config.clone()).unwrap();
+    let tracer = init_tracer(&config).unwrap();
 
     let subscriber = Registry::default()
         .with(
@@ -67,10 +70,7 @@ async fn main() {
 
     // Handle shutdown gracefully
     match signal::ctrl_c().await {
-        Ok(()) => {
-            shutdown_tracer_provider();
-        }
-        Err(_) => {
+        _ => {
             shutdown_tracer_provider();
         }
     }
