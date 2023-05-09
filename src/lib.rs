@@ -15,9 +15,12 @@ mod settings;
 
 pub use settings::Settings;
 
-pub use api::owner::{ApiPayload, CreateOwner, CreateOwnerResponse, Owner};
+pub use api::owner::{
+    ApiPayload, CreateOwner, CreateOwnerResponse, Owner, UpdateCredentials, UpdateProfile,
+};
 
 #[allow(unused)]
+#[derive(Debug)]
 pub struct AppState {
     db: PgPool,
     config: Settings,

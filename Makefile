@@ -9,7 +9,7 @@ DB_HOST      ?= localhost
 test: export DB_PORT           ?= 5433
 test: export DB_CONTAINER_NAME ?= postgres_test
 test: export DATABASE_URL      ?= postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/${DB_NAME}
-test: init_db ping_db run_migrations ; cargo test; $(MAKE) clean_up
+test: init_db ping_db run_migrations ; cargo test -- --nocapture; $(MAKE) clean_up
 
 .PHONY: run
 run: export DB_PORT           ?= 5432
