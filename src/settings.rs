@@ -31,7 +31,7 @@ impl Settings {
             // Load from "env" based configs.
             .add_source(File::with_name(&format!("config/{}", run_mode)).required(false))
             // Load from ENVIRONMENT
-            .add_source(Environment::default())
+            .add_source(Environment::with_prefix("APP"))
             .build()?;
 
         // Deserialize and freeze configs as is.

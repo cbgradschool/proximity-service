@@ -31,6 +31,9 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Run tests
+        env:
+          APP_HONEYCOMB_API_KEY: ${{ secrets.APP_HONEYCOMB_API_KEY }}
+          APP_DATABASE_URL: ${{ secrets.APP_DATABASE_URL }}
         run: make test-ci
 
   fmt:
@@ -97,6 +100,8 @@ jobs:
         uses: actions/checkout@v3
       - name: Generate code coverage
         env:
+          APP_HONEYCOMB_API_KEY: ${{ secrets.APP_HONEYCOMB_API_KEY }}
+          APP_DATABASE_URL: ${{ secrets.APP_DATABASE_URL }}
           DATABASE_URL: postgres://postgres:password@postgres:5432/proximity_service
           POSTGRES_HOST: postgres
           POSTGRES_PORT: 5432
