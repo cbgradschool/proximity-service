@@ -13,7 +13,10 @@ fn init_tracer(config: &Settings) -> Result<sdktrace::Tracer, TraceError> {
         .with_exporter(
             opentelemetry_otlp::new_exporter()
                 .http()
-                .with_endpoint(format!("{}/v1/traces", config.honeycomb_host))
+                .with_endpoint(format!(
+                    "{}/v1/traces:{}",
+                    config.honeycomb_host, config.honeycomb_port
+                ))
                 .with_http_client(reqwest::Client::default())
                 .with_headers(HashMap::from([
                     (
@@ -71,6 +74,8 @@ async fn main() {
     // Handle shutdown gracefully
     match signal::ctrl_c().await {
         _ => {
+            info!("shutting down open-telemtry tracer and spinning down proximity service...");
+
             shutdown_tracer_provider();
         }
     }

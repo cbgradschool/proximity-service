@@ -1,4 +1,5 @@
 use config::{Config, ConfigError, Environment, File};
+use dotenvy::dotenv;
 use serde_derive::Deserialize;
 use std::env;
 
@@ -12,10 +13,13 @@ pub struct Settings {
     pub honeycomb_api_key: String,
     pub honeycomb_dataset: String,
     pub honeycomb_host: String,
+    pub honeycomb_port: String,
 }
 
 impl Settings {
     pub fn new() -> Result<Self, ConfigError> {
+        dotenv().ok();
+
         let run_mode = env::var("RUN_MODE").unwrap_or_else(|_| "development".into());
 
         //Hierarchial/Layered config composition.
