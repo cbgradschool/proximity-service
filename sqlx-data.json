@@ -54,6 +54,20 @@
     },
     "query": "insert into \"owners\" (name, email, password) values ($1, $2, $3) returning id;"
   },
+  "a46c23a2166a38889c3710740205867ed02cce5379aa7ad6913d60b0e65e5d00": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Varchar",
+          "Int4"
+        ]
+      }
+    },
+    "query": "UPDATE owners SET email = $1, password = $2 WHERE id = $3;"
+  },
   "a90952ab311aed4174d62e91afce3b30ca41cb08bdf2c097fc92fa0b2da56f33": {
     "describe": {
       "columns": [],
@@ -65,5 +79,18 @@
       }
     },
     "query": "delete from \"owners\" where id = $1"
+  },
+  "d5ae456263f363457223bbe3e1b522201752bb3c205ae143c37462dfcfffeb14": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Int4"
+        ]
+      }
+    },
+    "query": "UPDATE owners SET name = $1 WHERE id = $2;"
   }
 }
