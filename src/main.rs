@@ -3,7 +3,7 @@ use opentelemetry_otlp::WithExportConfig;
 use proximity_service::{serve, Settings};
 use sqlx::postgres::PgPoolOptions;
 use std::{collections::HashMap, net::TcpListener};
-use tokio::signal;
+use tokio::signal::unix::{signal, SignalKind};
 use tracing::info;
 use tracing_subscriber::{fmt, layer::SubscriberExt, registry::Registry};
 
@@ -28,6 +28,22 @@ fn init_tracer(config: &Settings) -> Result<sdktrace::Tracer, TraceError> {
                 .with_timeout(std::time::Duration::from_secs(2)),
         ) // Replace with runtime::Tokio if using async main
         .install_batch(opentelemetry::runtime::TokioCurrentThread)
+}
+
+async fn handle_shutdown_signal() {
+    let mut sigint = signal(SignalKind::interrupt()).unwrap();
+    let mut sigterm = signal(SignalKind::terminate()).unwrap();
+
+    tokio::select! {
+        _ = sigint.recv() => {
+            info!("Interrupt signal received, shutting down...");
+        }
+        _ = sigterm.recv() => {
+            info!("Terminate signal received, shutting down...");
+        }
+    }
+
+    shutdown_tracer_provider();
 }
 
 #[tokio::main]
@@ -72,11 +88,5 @@ async fn main() {
     });
 
     // Handle shutdown gracefully
-    match signal::ctrl_c().await {
-        _ => {
-            info!("shutting down open-telemtry tracer and spinning down proximity service...");
-
-            shutdown_tracer_provider();
-        }
-    }
+    handle_shutdown_signal().await;
 }
