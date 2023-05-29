@@ -28,17 +28,25 @@ jobs:
           # Maps tcp port 5432 on service container to the host
           - 5432:5432
     steps:
-      - uses: extractions/setup-just@v1
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - name: Install Dependencies
-	      run: cargo install sqlx-cli --no-default-features --features rustls,postgres
-      - name: Run tests
+      - name: Migrate database
         env:
-          APP_HONEYCOMB_API_KEY: ${{ secrets.APP_HONEYCOMB_API_KEY }}
           APP_DATABASE_URL: ${{ secrets.APP_DATABASE_URL }}
-        run: just test-ci
+        run: |
+          cargo install sqlx-cli --no-default-features --features rustls,postgres
+          sqlx migrate run --database-url "$APP_DATABASE_URL"
+      - name: Install latest nextest release
+        uses: taiki-e/install-action@nextest
+      - name: Test with latest nextest release
+        env:
+          APP_DATABASE_URL: ${{ secrets.APP_DATABASE_URL }}
+          APP_HONEYCOMB_API_KEY: ${{ secrets.APP_HONEYCOMB_API_KEY }}
+        uses: actions-rs/cargo@v1
+        with:
+          command: nextest
+          args: run --all-features
 
   fmt:
     name: Rustfmt
@@ -97,19 +105,25 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+    # App is being run within a container
     container:
       image: xd009642/tarpaulin
       options: --security-opt seccomp=unconfined
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-      - uses: extractions/setup-just@v1
-      - name: Install Dependencies
-	      run: cargo install sqlx-cli --no-default-features --features rustls,postgres
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Migrate database
+        env:
+          APP_DATABASE_URL: postgres://postgres:password@postgres:5432/proximity_service
+        run: |
+          cargo install sqlx-cli --no-default-features --features rustls,postgres
+          sqlx migrate run --database-url "$APP_DATABASE_URL"
       - name: Generate code coverage
         env:
           APP_HONEYCOMB_API_KEY: ${{ secrets.APP_HONEYCOMB_API_KEY }}
-          APP_DATABASE_URL: ${{ secrets.APP_DATABASE_URL }}
+          APP_DATABASE_URL: postgres://postgres:password@postgres:5432/proximity_service
           POSTGRES_HOST: postgres
           POSTGRES_PORT: 5432
-        run: just test-ci-cov
+        run: |
+          cargo tarpaulin --verbose --workspace

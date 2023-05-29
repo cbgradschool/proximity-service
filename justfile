@@ -38,19 +38,8 @@ test:
   just DB_CONTAINER_NAME="postgres_test" DB_PORT="5433" _init-db
   just DB_CONTAINER_NAME="postgres_test" DB_PORT="5433" wait-for
   sqlx migrate run --database-url ${DB_URL}
-  APP_DATABASE_URL=${DB_URL} cargo test
+  APP_DATABASE_URL=${DB_URL} cargo nextest run
   just DB_CONTAINER_NAME="postgres_test" DB_PORT="5433" cleanup
-
-_ci_run_migrations:
-	sqlx migrate run --database-url ${APP_DATABASE_URL}
-
-# Run test suite in CI
-test-ci: _ci_run_migrations
-	cargo test
-
-# Run test suite in CI with code coverage
-test-ci-cov: _ci_run_migrations
-	cargo tarpaulin --verbose --workspace
 
 # Stop and remove Postgres docker container
 cleanup:
