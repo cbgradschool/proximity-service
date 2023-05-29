@@ -50,3 +50,4 @@ features = [
 
 [dev-dependencies]
 reqwest = { version = "0.11", features = ["json"] }
+wait-for-them = "0.4.0"
