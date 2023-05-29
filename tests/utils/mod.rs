@@ -7,7 +7,8 @@ use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 pub async fn spawn_app() -> (String, Pool<Postgres>) {
     dotenv().ok();
 
-    let db_connection_url = env::var("DATABASE_URL").expect("Database connection url not found.");
+    let db_connection_url =
+        env::var("APP_DATABASE_URL").expect("Database connection url not found.");
 
     let db = PgPoolOptions::new()
         .max_connections(50)
