@@ -4,7 +4,7 @@ use proximity_service::{serve, Settings};
 use sqlx::postgres::PgPoolOptions;
 use std::{collections::HashMap, net::TcpListener};
 use tokio::signal::unix::{signal, SignalKind};
-use tracing::info;
+use tracing::{error, info};
 use tracing_subscriber::{fmt, layer::SubscriberExt, registry::Registry};
 
 fn init_tracer(config: &Settings) -> Result<sdktrace::Tracer, TraceError> {
@@ -36,10 +36,10 @@ async fn handle_shutdown_signal() {
 
     tokio::select! {
         _ = sigint.recv() => {
-            info!("Interrupt signal received, shutting down...");
+            info!("SIGINT signal received, shutting down...");
         }
         _ = sigterm.recv() => {
-            info!("Terminate signal received, shutting down...");
+            info!("SIGTERM signal received, shutting down...");
         }
     }
 
@@ -79,14 +79,11 @@ async fn main() {
         .local_addr()
         .unwrap();
 
-    let server = serve(&addr, db, config);
+    let server = serve(&addr, db, config).with_graceful_shutdown(handle_shutdown_signal());
 
-    tokio::spawn(async move {
-        info!("proximity_service starting up...");
+    info!("Starting up proximity_service...");
 
-        server.await.unwrap();
-    });
-
-    // Handle shutdown gracefully
-    handle_shutdown_signal().await;
+    if let Err(e) = server.await {
+        error!("proximity_service failed to start: {:?}", e)
+    }
 }

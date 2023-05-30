@@ -21,20 +21,20 @@ pub struct CreateOwner {
     pub password: String,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct UpdateProfile {
     pub name: String,  // NOTE: Is this the appropriate type?
     pub owner_id: i32, // NOTE: Why does u32 not work for making the sql query
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct UpdateCredentials {
     pub email: String,
     pub password: String,
     pub owner_id: i32, // NOTE: Why does u32 not work for making the sql query
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct CreateOwnerResponse {
     pub id: i32,
 }
@@ -63,6 +63,7 @@ pub async fn get_owner(Path(id): Path<i32>, state: Extension<Arc<AppState>>) -> 
     )
 }
 
+// TODO: Obfuscate password and possibly email
 #[tracing::instrument(name = "Create a single Owner resource")]
 pub async fn create_owner(
     state: Extension<Arc<AppState>>,
@@ -83,6 +84,7 @@ pub async fn create_owner(
     (StatusCode::CREATED, Json(response))
 }
 
+#[tracing::instrument(name = "Update an Owner's profile")]
 pub async fn update_profile(
     state: Extension<Arc<AppState>>,
     Json(req): Json<ApiPayload<UpdateProfile>>,
@@ -98,6 +100,8 @@ pub async fn update_profile(
     StatusCode::NO_CONTENT
 }
 
+// TODO: Obfuscate password and possibly email
+#[tracing::instrument(name = "Update an Owner's credentials")]
 pub async fn update_credentials(
     state: Extension<Arc<AppState>>,
     Json(req): Json<ApiPayload<UpdateCredentials>>,
@@ -114,6 +118,7 @@ pub async fn update_credentials(
     StatusCode::NO_CONTENT
 }
 
+#[tracing::instrument(name = "Delete a single owner record")]
 pub async fn delete_owner(
     Path(id): Path<i32>,
     state: Extension<Arc<AppState>>,
