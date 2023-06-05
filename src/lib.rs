@@ -1,23 +1,28 @@
 use axum::{routing::IntoMakeService, Extension, Router, Server};
-use http::{Request, Response};
+use http::header::HeaderName;
 use hyper::server::conn::AddrIncoming;
-use hyper::Body;
 use sqlx::PgPool;
-use std::time::Duration;
 use std::{net::SocketAddr, sync::Arc};
 use tower::ServiceBuilder;
-use tower_http::trace::{DefaultOnRequest, OnResponse, TraceLayer};
-use tracing::{Level, Span};
+use tower_http::{
+    request_id::{PropagateRequestIdLayer, SetRequestIdLayer},
+    trace::{DefaultOnRequest, TraceLayer},
+};
+use tracing::Level;
 
 mod api;
 
 mod settings;
+
+mod telemetry;
 
 pub use settings::Settings;
 
 pub use api::owner::{
     ApiPayload, CreateOwner, CreateOwnerResponse, Owner, UpdateCredentials, UpdateProfile,
 };
+
+pub use telemetry::{HTTPRequestId, InitialSpan, OnResponseTrace};
 
 #[allow(unused)]
 #[derive(Debug)]
@@ -26,46 +31,26 @@ pub struct AppState {
     config: Settings,
 }
 
-#[derive(Debug, Clone)]
-struct OnResponseTrace;
-
-impl<B> OnResponse<B> for OnResponseTrace {
-    fn on_response(self, response: &Response<B>, latency: Duration, span: &Span) {
-        let status_code = response.status().as_u16();
-
-        span.record("status_code", status_code);
-
-        span.record("latency", format_args!("{} μs", latency.as_micros()));
-
-        tracing::event!(
-            Level::INFO,
-            latency = format_args!("{} μs", latency.as_micros()),
-            status = status_code,
-            "finished processing request"
-        );
-    }
-}
-
 pub fn serve(
     addr: &SocketAddr,
     db: PgPool,
     config: Settings,
 ) -> Server<AddrIncoming, IntoMakeService<axum::Router>> {
+    let x_request_id = HeaderName::from_static("x-request-id");
+
     let app = Router::new()
         .merge(api::health_check::router())
         .merge(api::owner::router())
         .layer(
             ServiceBuilder::new()
+                .layer(SetRequestIdLayer::new(
+                    x_request_id.clone(),
+                    HTTPRequestId::default(),
+                ))
+                .layer(PropagateRequestIdLayer::new(x_request_id))
                 .layer(
                     TraceLayer::new_for_http()
-                        // .make_span_with(DefaultMakeSpan::new().include_headers(true))
-                        .make_span_with(|_request: &Request<Body>| {
-                            tracing::info_span!(
-                                "http-request",
-                                status_code = tracing::field::Empty,
-                                greeting = tracing::field::Empty
-                            )
-                        })
+                        .make_span_with(InitialSpan::new())
                         .on_request(DefaultOnRequest::new().level(Level::INFO))
                         .on_response(OnResponseTrace),
                 )
