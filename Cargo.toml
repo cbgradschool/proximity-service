@@ -29,14 +29,18 @@ tower-http = { version = "0.4", features = ["trace"] }
 config = { version = "0.13.3" }
 reqwest = { version = "0.11.13" }
 # - observability
-opentelemetry = { version = "0.17.0", features = ["rt-tokio-current-thread"] }
-opentelemetry-otlp = { version = "0.10", features = [
-    "http-proto",
-    "reqwest-client",
+opentelemetry = { version = "0.19.0", features = ["rt-tokio-current-thread"] }
+opentelemetry-otlp = { version = "0.12", features = [
+    "tonic",
+    "tls",
+    "tls-roots",
 ] }
+tonic = { version = "0.8.3", features = ["tls"] }
 tracing = { version = "0.1.37" }
-tracing-opentelemetry = { version = "0.17.0" }
-tracing-subscriber = { version = "0.3.16", features = ["std"] }
+tracing-opentelemetry = { version = "0.19.0" }
+tracing-subscriber = { version = "0.3.16", features = ["std", "env-filter"] }
+url = "2.2.0"
+http = "0.2"
 
 [dependencies.sqlx]
 version = "0.6.2"

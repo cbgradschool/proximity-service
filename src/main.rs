@@ -1,32 +1,63 @@
-use opentelemetry::{global::shutdown_tracer_provider, sdk::trace as sdktrace, trace::TraceError};
+use opentelemetry::{
+    global::shutdown_tracer_provider,
+    sdk::{
+        trace::{self, RandomIdGenerator},
+        Resource,
+    },
+    trace::TraceError,
+    KeyValue,
+};
 use opentelemetry_otlp::WithExportConfig;
 use proximity_service::{serve, Settings};
 use sqlx::postgres::PgPoolOptions;
-use std::{collections::HashMap, net::TcpListener};
+use std::net::TcpListener;
 use tokio::signal::unix::{signal, SignalKind};
+use tonic::{metadata::MetadataMap, transport::ClientTlsConfig};
 use tracing::{error, info};
-use tracing_subscriber::{fmt, layer::SubscriberExt, registry::Registry};
+use tracing_subscriber::{fmt, layer::SubscriberExt, registry::Registry, EnvFilter};
 
-fn init_tracer(config: &Settings) -> Result<sdktrace::Tracer, TraceError> {
+use url::Url;
+
+fn init_tracer(config: &Settings) -> Result<opentelemetry::sdk::trace::Tracer, TraceError> {
+    let mut metadata = MetadataMap::with_capacity(2);
+
+    metadata.insert(
+        "x-honeycomb-team",
+        config.honeycomb_api_key.parse().unwrap(),
+    );
+    metadata.insert(
+        "x-honeycomb-dataset",
+        config.honeycomb_dataset.parse().unwrap(),
+    );
+
+    let host_and_port = format!("{}:{}", config.honeycomb_host, config.honeycomb_port);
+
+    let endpoint = Url::parse(&host_and_port).expect("endpoint is not a valid url");
+
     opentelemetry_otlp::new_pipeline()
         .tracing()
         .with_exporter(
             opentelemetry_otlp::new_exporter()
-                .http()
-                .with_endpoint(format!(
-                    "{}/v1/traces:{}",
-                    config.honeycomb_host, config.honeycomb_port
-                ))
-                .with_http_client(reqwest::Client::default())
-                .with_headers(HashMap::from([
-                    (
-                        "x-honeycomb-dataset".into(),
-                        config.honeycomb_dataset.clone(),
+                .tonic()
+                .with_endpoint(endpoint.as_str())
+                .with_metadata(metadata)
+                .with_tls_config(
+                    ClientTlsConfig::new().domain_name(
+                        endpoint
+                            .host_str()
+                            .expect("the specified endpoint should have a valid host"),
                     ),
-                    ("x-honeycomb-team".into(), config.honeycomb_api_key.clone()),
-                ]))
+                )
                 .with_timeout(std::time::Duration::from_secs(2)),
-        ) // Replace with runtime::Tokio if using async main
+        )
+        .with_trace_config(
+            trace::config()
+                .with_id_generator(RandomIdGenerator::default())
+                .with_resource(Resource::new(vec![KeyValue::new(
+                    "service.name",
+                    "proximity-service",
+                )])),
+        )
         .install_batch(opentelemetry::runtime::TokioCurrentThread)
 }
 
@@ -57,6 +88,7 @@ async fn main() {
             // OpenTelemetry layer
             tracing_opentelemetry::layer().with_tracer(tracer),
         )
+        .with(EnvFilter::new("INFO"))
         .with(
             // Pretty print layer
             fmt::layer()
