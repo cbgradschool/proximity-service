@@ -22,7 +22,7 @@ pub use api::owner::{
     ApiPayload, CreateOwner, CreateOwnerResponse, Owner, UpdateCredentials, UpdateProfile,
 };
 
-pub use telemetry::{HTTPRequestId, InitialSpan, OnResponseTrace};
+pub use telemetry::{HTTPRequestId, InitialSpan, OnFailureTrace, OnResponseTrace};
 
 #[allow(unused)]
 #[derive(Debug)]
@@ -52,7 +52,8 @@ pub fn serve(
                     TraceLayer::new_for_http()
                         .make_span_with(InitialSpan::new())
                         .on_request(DefaultOnRequest::new().level(Level::INFO))
-                        .on_response(OnResponseTrace),
+                        .on_response(OnResponseTrace)
+                        .on_failure(OnFailureTrace),
                 )
                 .layer(Extension(Arc::new(AppState { db, config }))),
         );

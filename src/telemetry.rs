@@ -1,10 +1,9 @@
 use http::{HeaderName, HeaderValue, Request, Response};
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::Arc;
-use std::time::Duration;
+use std::{fmt, time::Duration};
 use tower_http::{
+    classify::ServerErrorsFailureClass,
     request_id::{MakeRequestId, RequestId},
-    trace::{MakeSpan, OnResponse},
+    trace::{MakeSpan, OnFailure, OnResponse},
 };
 use tracing::{Level, Span};
 use uuid::Uuid;
@@ -26,6 +25,20 @@ impl<B> OnResponse<B> for OnResponseTrace {
             status = status_code,
             "finished processing request"
         );
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct OnFailureTrace;
+
+impl<E> OnFailure<E> for OnFailureTrace
+where
+    E: fmt::Display,
+{
+    fn on_failure(&mut self, error: E, latency: Duration, span: &Span) {
+        println!("Error happened SAVEME");
+        tracing::info!("HELPME");
+        tracing::debug!("something went wrong")
     }
 }
 

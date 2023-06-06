@@ -41,6 +41,7 @@ tracing-opentelemetry = { version = "0.19.0" }
 tracing-subscriber = { version = "0.3.16", features = ["std", "env-filter"] }
 url = "2.2.0"
 http = "0.2"
+anyhow = "1.0"
 
 [dependencies.sqlx]
 version = "0.6.2"

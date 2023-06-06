@@ -1510,6 +1510,7 @@ dependencies = [
 name = "proximity_service"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "axum",
  "config",
  "dotenvy",

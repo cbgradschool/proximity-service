@@ -1,12 +1,13 @@
 use crate::AppState;
 use axum::{
     extract::Path,
-    response::IntoResponse,
+    response::{IntoResponse, Response},
     routing::{delete, get, patch, post},
     Extension, Json, Router,
 };
 use hyper::StatusCode;
 use serde::{Deserialize, Serialize};
+use sqlx::PgPool;
 use std::sync::Arc;
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -46,21 +47,53 @@ pub struct Owner {
     pub email: String,
 }
 
-#[tracing::instrument(name = "Fetch a single Owner resource")]
-pub async fn get_owner(Path(id): Path<i32>, state: Extension<Arc<AppState>>) -> impl IntoResponse {
-    let owner = sqlx::query!(r#"select id, name, email from "owners" where id = $1;"#, id,)
-        .fetch_one(&state.db)
-        .await
-        .unwrap();
+#[derive(Deserialize, Serialize)]
+pub struct ErrorResponse {
+    pub message: String,
+}
 
-    (
-        StatusCode::OK,
-        Json(Owner {
-            id: owner.id,
-            name: owner.name,
-            email: owner.email,
-        }),
-    )
+struct AppError(anyhow::Error);
+
+// Tell axum how to convert `AppError` into a response.
+impl IntoResponse for AppError {
+    fn into_response(self) -> Response {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Something went wrong: {}", self.0),
+        )
+            .into_response()
+    }
+}
+
+#[tracing::instrument(name = "SELECT a single owner")]
+pub async fn select_owner(id: i32, db: &PgPool) -> Result<Owner, sqlx::Error> {
+    let owner = sqlx::query!(r#"select id, name, email from "owners" where id = $1;"#, id,)
+        .fetch_one(db)
+        .await
+        .map_err(|error| {
+            tracing::error!("Failed to execute query: {:?}", error);
+            error
+        })?;
+
+    Ok(Owner {
+        id: owner.id,
+        name: owner.name,
+        email: owner.email,
+    })
+}
+
+#[tracing::instrument(name = "GET a single Owner resource")]
+pub async fn get_owner(
+    Path(id): Path<i32>,
+    state: Extension<Arc<AppState>>,
+) -> Result<impl IntoResponse, impl IntoResponse> {
+    match select_owner(id, &state.db).await {
+        Ok(record) => Ok((StatusCode::OK, Json(record))),
+        Err(error) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Something happened: {:?}", error),
+        )),
+    }
 }
 
 // TODO: Obfuscate password and possibly email
