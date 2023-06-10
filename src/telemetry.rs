@@ -1,7 +1,6 @@
 use http::{HeaderName, HeaderValue, Request, Response};
 use std::{fmt, time::Duration};
 use tower_http::{
-    classify::ServerErrorsFailureClass,
     request_id::{MakeRequestId, RequestId},
     trace::{MakeSpan, OnFailure, OnResponse},
 };

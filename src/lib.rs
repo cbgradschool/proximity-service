@@ -22,8 +22,6 @@ pub use api::owner::{
     ApiPayload, CreateOwner, CreateOwnerResponse, Owner, UpdateCredentials, UpdateProfile,
 };
 
-pub use telemetry::{HTTPRequestId, InitialSpan, OnFailureTrace, OnResponseTrace};
-
 #[allow(unused)]
 #[derive(Debug)]
 pub struct AppState {
@@ -45,15 +43,15 @@ pub fn serve(
             ServiceBuilder::new()
                 .layer(SetRequestIdLayer::new(
                     x_request_id.clone(),
-                    HTTPRequestId::default(),
+                    telemetry::HTTPRequestId::default(),
                 ))
                 .layer(PropagateRequestIdLayer::new(x_request_id))
                 .layer(
                     TraceLayer::new_for_http()
-                        .make_span_with(InitialSpan::new())
+                        .make_span_with(telemetry::InitialSpan::new())
                         .on_request(DefaultOnRequest::new().level(Level::INFO))
-                        .on_response(OnResponseTrace)
-                        .on_failure(OnFailureTrace),
+                        .on_response(telemetry::OnResponseTrace)
+                        .on_failure(telemetry::OnFailureTrace),
                 )
                 .layer(Extension(Arc::new(AppState { db, config }))),
         );

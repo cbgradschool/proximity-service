@@ -59,7 +59,7 @@ impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Something went wrong: {}", self.0),
+            format!("Server Error: {}", self.0),
         )
             .into_response()
     }
@@ -82,6 +82,7 @@ pub async fn select_owner(id: i32, db: &PgPool) -> Result<Owner, sqlx::Error> {
     })
 }
 
+// Pattern: Error handling
 #[tracing::instrument(name = "GET a single Owner resource")]
 pub async fn get_owner(
     Path(id): Path<i32>,
@@ -89,9 +90,13 @@ pub async fn get_owner(
 ) -> Result<impl IntoResponse, impl IntoResponse> {
     match select_owner(id, &state.db).await {
         Ok(record) => Ok((StatusCode::OK, Json(record))),
+        Err(sqlx::Error::RowNotFound) => Err((
+            StatusCode::NOT_FOUND,
+            format!("Record not found for id: {:?}", id),
+        )),
         Err(error) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Something happened: {:?}", error),
+            format!("Unknown Error: {:?}", error),
         )),
     }
 }
