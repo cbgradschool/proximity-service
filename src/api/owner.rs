@@ -6,8 +6,10 @@ use axum::{
     Extension, Json, Router,
 };
 use hyper::StatusCode;
+use sea_query::*;
+use sea_query_binder::SqlxBinder;
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
+use sqlx::{postgres::PgRow, PgPool, Row};
 use std::sync::Arc;
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -40,8 +42,9 @@ pub struct CreateOwnerResponse {
     pub id: i32,
 }
 
+#[enum_def] // => Generates OwnersIden
 #[derive(Deserialize, Serialize)]
-pub struct Owner {
+pub struct Owners {
     pub id: i32,
     pub name: String,
     pub email: String,
@@ -66,20 +69,25 @@ impl IntoResponse for AppError {
 }
 
 #[tracing::instrument(name = "SELECT a single owner")]
-pub async fn select_owner(id: i32, db: &PgPool) -> Result<Owner, sqlx::Error> {
-    let owner = sqlx::query!(r#"select id, name, email from "owners" where id = $1;"#, id,)
+pub async fn select_owner(id: i32, db: &PgPool) -> Result<Owners, sqlx::Error> {
+    let (sql, values) = Query::select()
+        .columns([OwnersIden::Id, OwnersIden::Name, OwnersIden::Email])
+        .from(OwnersIden::Table)
+        .and_where(Expr::col(OwnersIden::Id).eq(id))
+        .build_sqlx(PostgresQueryBuilder);
+
+    sqlx::query_with(&sql, values)
+        .map(|row: PgRow| Owners {
+            id: row.get("id"),
+            name: row.get("name"),
+            email: row.get("email"),
+        })
         .fetch_one(db)
         .await
         .map_err(|error| {
             tracing::error!("Failed to execute query: {:?}", error);
             error
-        })?;
-
-    Ok(Owner {
-        id: owner.id,
-        name: owner.name,
-        email: owner.email,
-    })
+        })
 }
 
 // Pattern: Error handling

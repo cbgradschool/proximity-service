@@ -34,9 +34,7 @@ impl<E> OnFailure<E> for OnFailureTrace
 where
     E: fmt::Display,
 {
-    fn on_failure(&mut self, error: E, latency: Duration, span: &Span) {
-        println!("Error happened SAVEME");
-        tracing::info!("HELPME");
+    fn on_failure(&mut self, _error: E, _latency: Duration, _span: &Span) {
         tracing::debug!("something went wrong")
     }
 }

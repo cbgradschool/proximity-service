@@ -1,5 +1,5 @@
 use proximity_service::{
-    ApiPayload, CreateOwner, CreateOwnerResponse, Owner, UpdateCredentials, UpdateProfile,
+    ApiPayload, CreateOwner, CreateOwnerResponse, Owners, UpdateCredentials, UpdateProfile,
 };
 
 mod utils;
@@ -24,7 +24,7 @@ async fn test_get_owner() {
 
     assert_eq!(actual, expected);
 
-    let owner_response: Owner = response.json().await.unwrap();
+    let owner_response: Owners = response.json().await.unwrap();
 
     assert_eq!(owner_response.id, owner_id);
 
