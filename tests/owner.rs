@@ -1,142 +1,168 @@
 use proximity_service::{
-    ApiPayload, CreateOwner, CreateOwnerResponse, Owners, UpdateCredentials, UpdateProfile,
+    create_owner, ApiPayload, CreateOwner, CreateOwnerResponse, Owners, UpdateCredentials,
+    UpdateProfile,
 };
 
 mod utils;
 
-#[tokio::test]
-async fn test_get_owner() {
-    let (address, db) = utils::spawn_app().await;
+mod tests {
+    use sqlx::PgPool;
 
-    let owner_id = utils::test_setup(&db).await;
+    use super::*;
 
-    let client = reqwest::Client::new();
+    struct TestSetup {
+        owner_id: i32,
+    }
 
-    let response = client
-        .get(&format!("{}/owner/{}", &address, owner_id))
-        .send()
-        .await
-        .unwrap();
+    async fn setup(db: &PgPool) -> Result<TestSetup, sqlx::Error> {
+        let owner = CreateOwner {
+            name: String::from("Henry"),
+            email: String::from("@gmail.com"),
+            password: String::from("password"),
+        };
 
-    let actual = response.status();
+        create_owner(owner, db).await.map(|record| TestSetup {
+            owner_id: record.id,
+        })
+    }
 
-    let expected = reqwest::StatusCode::OK;
+    impl Drop for TestSetup {
+        fn drop(&mut self) {}
+    }
 
-    assert_eq!(actual, expected);
+    #[sqlx::test]
+    async fn test_get_owner(db: PgPool) {
+        let (address, db) = utils::make_server(db).await;
 
-    let owner_response: Owners = response.json().await.unwrap();
+        let test_setup = setup(&db).await.expect("Expected to get a record");
 
-    assert_eq!(owner_response.id, owner_id);
+        let client = reqwest::Client::new();
 
-    utils::test_teardown(owner_id, &db).await.unwrap();
-}
+        let response = client
+            .get(&format!("{}/owner/{}", &address, test_setup.owner_id))
+            .send()
+            .await
+            .unwrap();
 
-#[tokio::test]
-async fn test_post_owner() {
-    let (address, db) = utils::spawn_app().await;
+        let actual = response.status();
 
-    let new_owner = ApiPayload {
-        payload: CreateOwner {
-            name: String::from("David Hayer"),
-            email: String::from("solidsnake@sonsofliberty.test"),
-            password: String::from("lalilulelo"),
-        },
-    };
+        let expected = reqwest::StatusCode::OK;
 
-    let client = reqwest::Client::new();
+        assert_eq!(actual, expected);
 
-    let response = client
-        .post(&format!("{}/owner", &address))
-        .json(&new_owner)
-        .send()
-        .await
-        .unwrap();
+        let owner_response: Owners = response.json().await.unwrap();
 
-    assert!(response.status().is_success());
+        assert_eq!(owner_response.id, test_setup.owner_id);
+    }
 
-    let json_response: CreateOwnerResponse = response.json().await.unwrap();
+    #[sqlx::test]
+    async fn test_post_owner(db: PgPool) {
+        let (address, _) = utils::make_server(db).await;
 
-    assert!(json_response.id > 0);
+        let new_owner = ApiPayload {
+            payload: CreateOwner {
+                name: String::from("David Hayer"),
+                email: String::from("solidsnake@sonsofliberty.test"),
+                password: String::from("lalilulelo"),
+            },
+        };
 
-    utils::test_teardown(json_response.id, &db).await.unwrap();
-}
+        let client = reqwest::Client::new();
 
-#[tokio::test]
-async fn test_delete_owner() {
-    let (address, db) = utils::spawn_app().await;
+        let response = client
+            .post(&format!("{}/owner", &address))
+            .json(&new_owner)
+            .send()
+            .await
+            .unwrap();
 
-    let owner_id = utils::test_setup(&db).await;
+        assert!(response.status().is_success());
 
-    let client = reqwest::Client::new();
+        let json_response: CreateOwnerResponse = response.json().await.unwrap();
 
-    let response = client
-        .delete(&format!("{}/owner/{}", &address, &owner_id))
-        .send()
-        .await
-        .unwrap();
+        assert!(json_response.id > 0);
+    }
 
-    let actual = response.status();
+    #[sqlx::test]
+    async fn test_delete_owner(db: PgPool) {
+        let (address, db) = utils::make_server(db).await;
 
-    let expected = reqwest::StatusCode::NO_CONTENT;
+        let test_setup = setup(&db).await.expect("Expected to get a record");
 
-    assert_eq!(actual, expected)
-}
+        let client = reqwest::Client::new();
 
-#[tokio::test]
-async fn test_update_profile_information() {
-    let (address, db) = utils::spawn_app().await;
+        let response = client
+            .delete(&format!("{}/owner/{}", &address, &test_setup.owner_id))
+            .send()
+            .await
+            .unwrap();
 
-    let owner_id = utils::test_setup(&db).await;
+        let actual = response.status();
 
-    let client = reqwest::Client::new();
+        let expected = reqwest::StatusCode::NO_CONTENT;
 
-    let patch = ApiPayload {
-        payload: UpdateProfile {
-            name: String::from("Jane"),
-            owner_id,
-        },
-    };
+        assert_eq!(actual, expected)
+    }
 
-    let response = client
-        .patch(format!("{}/owner/{}/profile", &address, &owner_id))
-        .json(&patch)
-        .send()
-        .await
-        .unwrap();
+    #[sqlx::test]
+    async fn test_update_profile_information(db: PgPool) {
+        let (address, db) = utils::make_server(db).await;
 
-    let actual = response.status();
+        let test_setup = setup(&db).await.expect("Somethin");
 
-    let expected = reqwest::StatusCode::NO_CONTENT;
+        let client = reqwest::Client::new();
 
-    assert_eq!(actual, expected)
-}
+        let patch = ApiPayload {
+            payload: UpdateProfile {
+                name: String::from("Jane"),
+                owner_id: test_setup.owner_id,
+            },
+        };
 
-#[tokio::test]
-async fn test_update_credentials() {
-    let (address, db) = utils::spawn_app().await;
+        let response = client
+            .patch(format!(
+                "{}/owner/{}/profile",
+                &address, &test_setup.owner_id
+            ))
+            .json(&patch)
+            .send()
+            .await
+            .unwrap();
 
-    let owner_id = utils::test_setup(&db).await;
+        let actual = response.status();
 
-    let client = reqwest::Client::new();
+        let expected = reqwest::StatusCode::NO_CONTENT;
 
-    let patch = ApiPayload {
-        payload: UpdateCredentials {
-            email: String::from("gray_fox@thepatriots.com"),
-            password: String::from("lalilulelo"),
-            owner_id,
-        },
-    };
+        assert_eq!(actual, expected)
+    }
 
-    let request = client
-        .patch(format!("{}/owner/{}/credentials", &address, owner_id))
-        .json(&patch)
-        .send()
-        .await
-        .unwrap();
+    #[sqlx::test]
+    async fn test_update_credentials(db: PgPool) {
+        let (address, db) = utils::make_server(db).await;
 
-    let actual = request.status();
+        let owner_id = utils::test_setup(&db).await;
 
-    let expected = reqwest::StatusCode::NO_CONTENT;
+        let client = reqwest::Client::new();
 
-    assert_eq!(actual, expected)
+        let patch = ApiPayload {
+            payload: UpdateCredentials {
+                email: String::from("gray_fox@thepatriots.com"),
+                password: String::from("lalilulelo"),
+                owner_id,
+            },
+        };
+
+        let request = client
+            .patch(format!("{}/owner/{}/credentials", &address, owner_id))
+            .json(&patch)
+            .send()
+            .await
+            .unwrap();
+
+        let actual = request.status();
+
+        let expected = reqwest::StatusCode::NO_CONTENT;
+
+        assert_eq!(actual, expected)
+    }
 }

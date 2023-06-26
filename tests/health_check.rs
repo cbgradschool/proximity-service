@@ -1,8 +1,10 @@
+use sqlx::PgPool;
+
 mod utils;
 
-#[tokio::test]
-async fn test_health_check() {
-    let (address, _) = utils::spawn_app().await;
+#[sqlx::test]
+async fn test_health_check(db: PgPool) {
+    let (address, _) = utils::make_server(db).await;
 
     let client = reqwest::Client::new();
 

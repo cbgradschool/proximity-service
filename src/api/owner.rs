@@ -17,6 +17,15 @@ pub struct ApiPayload<T> {
     pub payload: T,
 }
 
+#[enum_def] // => Generates OwnersIden
+#[derive(Deserialize, Serialize)]
+pub struct Owners {
+    pub id: i32,
+    pub name: String,
+    pub email: String,
+    pub password: String,
+}
+
 #[derive(Deserialize, Serialize, Debug)]
 pub struct CreateOwner {
     pub name: String,
@@ -42,14 +51,6 @@ pub struct CreateOwnerResponse {
     pub id: i32,
 }
 
-#[enum_def] // => Generates OwnersIden
-#[derive(Deserialize, Serialize)]
-pub struct Owners {
-    pub id: i32,
-    pub name: String,
-    pub email: String,
-}
-
 #[derive(Deserialize, Serialize)]
 pub struct ErrorResponse {
     pub message: String,
@@ -71,7 +72,12 @@ impl IntoResponse for AppError {
 #[tracing::instrument(name = "SELECT a single owner")]
 pub async fn select_owner(id: i32, db: &PgPool) -> Result<Owners, sqlx::Error> {
     let (sql, values) = Query::select()
-        .columns([OwnersIden::Id, OwnersIden::Name, OwnersIden::Email])
+        .columns([
+            OwnersIden::Id,
+            OwnersIden::Name,
+            OwnersIden::Email,
+            OwnersIden::Password,
+        ])
         .from(OwnersIden::Table)
         .and_where(Expr::col(OwnersIden::Id).eq(id))
         .build_sqlx(PostgresQueryBuilder);
@@ -81,6 +87,7 @@ pub async fn select_owner(id: i32, db: &PgPool) -> Result<Owners, sqlx::Error> {
             id: row.get("id"),
             name: row.get("name"),
             email: row.get("email"),
+            password: row.get("password"),
         })
         .fetch_one(db)
         .await
@@ -109,25 +116,49 @@ pub async fn get_owner(
     }
 }
 
-// TODO: Obfuscate password and possibly email
-#[tracing::instrument(name = "Create a single Owner resource")]
+#[tracing::instrument(name = "CREATE a single owner")]
 pub async fn create_owner(
+    owner: CreateOwner,
+    db: &PgPool,
+) -> Result<CreateOwnerResponse, sqlx::Error> {
+    let (sql, values) = Query::insert()
+        .into_table(OwnersIden::Table)
+        .columns([OwnersIden::Name, OwnersIden::Email, OwnersIden::Password])
+        .values_panic([owner.name.into(), owner.email.into(), owner.password.into()])
+        .returning(Query::returning().columns([OwnersIden::Id]))
+        .build_sqlx(PostgresQueryBuilder);
+
+    sqlx::query_with(&sql, values)
+        .map(|row: PgRow| CreateOwnerResponse { id: row.get("id") })
+        .fetch_one(db)
+        .await
+        .map_err(|error| {
+            tracing::error!("Failed to execute query: {:?}", error);
+            error
+        })
+}
+
+#[tracing::instrument(name = "POST a single Owner resource")]
+pub async fn post_owner(
     state: Extension<Arc<AppState>>,
     Json(req): Json<ApiPayload<CreateOwner>>,
 ) -> impl IntoResponse {
-    let insert_id = sqlx::query_scalar!(
-        r#"insert into "owners" (name, email, password) values ($1, $2, $3) returning id;"#,
-        req.payload.name,
-        req.payload.email,
-        req.payload.password,
-    )
-    .fetch_one(&state.db)
-    .await
-    .unwrap();
+    let owner = CreateOwner {
+        name: req.payload.name,
+        email: req.payload.email,
+        password: req.payload.password,
+    };
 
-    let response = CreateOwnerResponse { id: insert_id };
-
-    (StatusCode::CREATED, Json(response))
+    match create_owner(owner, &state.db).await {
+        Ok(record) => Ok((
+            StatusCode::CREATED,
+            Json(CreateOwnerResponse { id: record.id }),
+        )),
+        Err(error) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Unknown Error: {:?}", error),
+        )),
+    }
 }
 
 #[tracing::instrument(name = "Update an Owner's profile")]
@@ -179,7 +210,7 @@ pub async fn delete_owner(
 pub fn router() -> Router {
     Router::new()
         .route("/owner/:id", get(get_owner))
-        .route("/owner", post(create_owner))
+        .route("/owner", post(post_owner))
         .route("/owner/:id", delete(delete_owner))
         .route("/owner/:id/profile", patch(update_profile))
         .route("/owner/:id/credentials", patch(update_credentials))

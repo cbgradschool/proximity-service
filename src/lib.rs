@@ -19,8 +19,11 @@ mod telemetry;
 pub use settings::Settings;
 
 pub use api::owner::{
-    ApiPayload, CreateOwner, CreateOwnerResponse, Owners, UpdateCredentials, UpdateProfile,
+    ApiPayload, CreateOwner, CreateOwnerResponse, Owners, OwnersIden, UpdateCredentials,
+    UpdateProfile,
 };
+
+pub use api::owner::create_owner;
 
 #[allow(unused)]
 #[derive(Debug)]

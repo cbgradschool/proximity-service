@@ -35,10 +35,11 @@ test:
   #!/usr/bin/env bash
   set -euxo pipefail
   DB_URL="postgres://postgres:password@localhost:5433/proximity_service"
+  DATABASE_URL="postgres://postgres:password@localhost:5433/proximity_service"
   just DB_CONTAINER_NAME="postgres_test" DB_PORT="5433" _init-db
   just DB_CONTAINER_NAME="postgres_test" DB_PORT="5433" wait-for
   sqlx migrate run --database-url ${DB_URL}
-  APP_DATABASE_URL=${DB_URL} cargo nextest run
+  APP_DATABASE_URL=${DB_URL} DATABASE_URL=${DB_URL} cargo nextest run
   just DB_CONTAINER_NAME="postgres_test" DB_PORT="5433" cleanup
 
 # 🧹 Stop and remove Postgres docker container

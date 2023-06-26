@@ -43,6 +43,7 @@ jobs:
         env:
           APP_DATABASE_URL: ${{ secrets.APP_DATABASE_URL }}
           APP_HONEYCOMB_API_KEY: ${{ secrets.APP_HONEYCOMB_API_KEY }}
+          DATABASE_URL: ${{ secrets.APP_DATABASE_URL }} # Duplicated for sqlx::test
         uses: actions-rs/cargo@v1
         with:
           command: nextest
