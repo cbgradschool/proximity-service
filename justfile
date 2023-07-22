@@ -7,6 +7,8 @@ DB_NAME := "proximity_service"
 DB_HOST := "localhost"
 DB_CONTAINER_NAME := "postgres"
 DB_PORT := "5432"
+OTEL_SERVICE_NAME := env_var_or_default("OTEL_SERVICE_NAME", "THING")
+APP_HONEYCOMB_API_KEY := env_var_or_default("APP_HONEYCOMB_API_KEY", "THING")
 
 _init-db:
 	docker run \
@@ -29,6 +31,9 @@ wait-for:
 # 🚀 Spins up service and it's dependencies. (Shuts and spins down service and dependencies on SIGINT)
 run: _init-db wait-for _run-migrations
 	doppler run --command="RUST_BACKTRACE=1 cargo watch -x check -x run"; just cleanup
+
+otel:
+	doppler run --command 'docker run -v $(pwd)/otel-config.yaml:/etc/otel-config.yaml -e OTEL_SERVICE_NAME=$OTEL_SERVICE_NAME -e APP_HONEYCOMB_API_KEY=$APP_HONEYCOMB_API_KEY otel/opentelemetry-collector-contrib:0.81.0'
 
 # 🧪 Run test suite locally
 test:

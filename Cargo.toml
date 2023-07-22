@@ -29,8 +29,12 @@ tower-http = { version = "0.4", features = ["trace", "request-id"] }
 config = { version = "0.13.3" }
 reqwest = { version = "0.11.13" }
 # - observability
-opentelemetry = { version = "0.19.0", features = ["rt-tokio-current-thread"] }
+opentelemetry = { version = "0.19.0", features = [
+    "rt-tokio-current-thread",
+    "metrics",
+] }
 opentelemetry-otlp = { version = "0.12", features = [
+    "metrics",
     "tonic",
     "tls",
     "tls-roots",

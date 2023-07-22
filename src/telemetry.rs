@@ -7,6 +7,20 @@ use tower_http::{
 use tracing::{Level, Span};
 use uuid::Uuid;
 
+use crate::Settings;
+use opentelemetry::{
+    global::shutdown_tracer_provider,
+    sdk::{
+        trace::{self, RandomIdGenerator},
+        Resource,
+    },
+    trace::TraceError,
+    KeyValue,
+};
+use opentelemetry_otlp::WithExportConfig;
+use tonic::{metadata::MetadataMap, transport::ClientTlsConfig};
+use url::Url;
+
 #[derive(Debug, Clone)]
 pub struct OnResponseTrace;
 
@@ -80,4 +94,47 @@ impl MakeRequestId for HTTPRequestId {
 
         Some(RequestId::new(header_value))
     }
+}
+
+fn init_tracer(config: &Settings) -> Result<opentelemetry::sdk::trace::Tracer, TraceError> {
+    let mut metadata = MetadataMap::with_capacity(2);
+
+    metadata.insert(
+        "x-honeycomb-team",
+        config.honeycomb_api_key.parse().unwrap(),
+    );
+    metadata.insert(
+        "x-honeycomb-dataset",
+        config.honeycomb_dataset.parse().unwrap(),
+    );
+
+    let host_and_port = format!("{}:{}", config.honeycomb_host, config.honeycomb_port);
+
+    let endpoint = Url::parse(&host_and_port).expect("endpoint is not a valid url");
+
+    opentelemetry_otlp::new_pipeline()
+        .tracing()
+        .with_exporter(
+            opentelemetry_otlp::new_exporter()
+                .tonic()
+                .with_endpoint(endpoint.as_str())
+                .with_metadata(metadata)
+                .with_tls_config(
+                    ClientTlsConfig::new().domain_name(
+                        endpoint
+                            .host_str()
+                            .expect("the specified endpoint should have a valid host"),
+                    ),
+                )
+                .with_timeout(std::time::Duration::from_secs(2)),
+        )
+        .with_trace_config(
+            trace::config()
+                .with_id_generator(RandomIdGenerator::default())
+                .with_resource(Resource::new(vec![KeyValue::new(
+                    "service.name",
+                    "proximity-service",
+                )])),
+        )
+        .install_batch(opentelemetry::runtime::TokioCurrentThread)
 }
