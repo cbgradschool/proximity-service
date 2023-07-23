@@ -3,3 +3,5 @@
 .env
 
 config/local.toml
+
+otel_collector_config.yaml

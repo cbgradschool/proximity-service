@@ -15,25 +15,24 @@ use proximity_service::{serve, Settings};
 use sqlx::postgres::PgPoolOptions;
 use std::net::TcpListener;
 use tokio::signal::unix::{signal, SignalKind};
-use tonic::{metadata::MetadataMap, transport::ClientTlsConfig};
+use tonic::metadata::{MetadataMap, MetadataValue};
 use tracing::{error, info};
 use tracing_subscriber::{fmt, layer::SubscriberExt, registry::Registry, EnvFilter};
 
 use url::Url;
 
 fn init_tracer(config: &Settings) -> Result<opentelemetry::sdk::trace::Tracer, TraceError> {
-    let mut metadata = MetadataMap::with_capacity(2);
+    let mut metadata = MetadataMap::with_capacity(3);
 
-    metadata.insert(
-        "x-honeycomb-team",
-        config.honeycomb_api_key.parse().unwrap(),
-    );
-    metadata.insert(
-        "x-honeycomb-dataset",
-        config.honeycomb_dataset.parse().unwrap(),
+    metadata.insert_bin(
+        "trace-proto-bin",
+        MetadataValue::from_bytes(b"[binary data]"),
     );
 
-    let host_and_port = format!("{}:{}", config.honeycomb_host, config.honeycomb_port);
+    let host_and_port = format!(
+        "{}:{}",
+        config.otel_collector_host, config.otel_collector_port
+    );
 
     let endpoint = Url::parse(&host_and_port).expect("endpoint is not a valid url");
 
@@ -44,14 +43,7 @@ fn init_tracer(config: &Settings) -> Result<opentelemetry::sdk::trace::Tracer, T
                 .tonic()
                 .with_endpoint(endpoint.as_str())
                 .with_metadata(metadata)
-                .with_tls_config(
-                    ClientTlsConfig::new().domain_name(
-                        endpoint
-                            .host_str()
-                            .expect("the specified endpoint should have a valid host"),
-                    ),
-                )
-                .with_timeout(std::time::Duration::from_secs(2)),
+                .with_timeout(std::time::Duration::from_secs(3)),
         )
         .with_trace_config(
             trace::config()

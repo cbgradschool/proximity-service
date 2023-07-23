@@ -14,6 +14,8 @@ pub struct Settings {
     pub honeycomb_dataset: String,
     pub honeycomb_host: String,
     pub honeycomb_port: String,
+    pub otel_collector_host: String,
+    pub otel_collector_port: String,
 }
 
 impl Settings {

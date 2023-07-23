@@ -5,5 +5,7 @@ port = 8080
 honeycomb_dataset = "proximity-service"
 honeycomb_host = "https://api.honeycomb.io"
 honeycomb_port = 443
+otel_collector_host = "http://localhost"
+otel_collector_port = 4317
 # Database
 db_max_connections = 50

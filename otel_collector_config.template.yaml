@@ -1,15 +1,15 @@
 exporters:
   otlp:
-    endpoint: api.honeycomb.io:443
+    endpoint: "api.honeycomb.io:443"
     headers:
-      x-honeycomb-team: $APP_HONEYCOMB_API_KEY
-      x-honeycomb-dataset: $OTEL_SERVICE_NAME
+      "x-honeycomb-team": ${APP_HONEYCOMB_API_KEY}
+  otlp/metrics:
+    endpoint: "api.honeycomb.io:443"
+    headers:
+      "x-honeycomb-team": ${APP_HONEYCOMB_API_KEY}
+      "x-honeycomb-dataset": ${OTEL_SERVICE_NAME}
   logging:
     loglevel: info
-  jaeger:
-    endpoint: localhost:14250
-    tls:
-      insecure: true
 receivers:
   hostmetrics:
     collection_interval: 10s
@@ -22,16 +22,17 @@ receivers:
       network: {}
       paging: {}
       processes: {}
-  oltp:
+  otlp:
     protocols:
-      grpc:
+      grpc: # port 4317
+      http: # port 4318
 processors:
   resourcedetection:
     detectors:
       - env
       - system
-  timestamp:
-    round_to_nearest: 1s
+  # timestamp:
+  #   round_to_nearest: 1s
   batch:
     send_batch_size: 8192
     timeout: 200ms
@@ -699,27 +700,16 @@ processors:
           - system.processes.count
 service:
   pipelines:
-    metrics:
-      receivers:
-        - hostmetrics
-      processors:
-        - metricstransform
-        - filter
-        - timestamp
-        - resourcedetection
-        - batch
-      exporters:
-        - logging
-        - otlp
     traces:
-      receivers:
-        - oltp
-      processors:
-        - batch
-      exporters:
-        - oltp
-        - jaeger
-        - logging
-  telemetry:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp, logging]
+    metrics:
+      receivers: [hostmetrics]
+      processors: [metricstransform, filter, resourcedetection, batch]
+      exporters: [otlp/metrics, logging]
     logs:
-      level: debug
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp, logging]
+

@@ -33,7 +33,10 @@ run: _init-db wait-for _run-migrations
 	doppler run --command="RUST_BACKTRACE=1 cargo watch -x check -x run"; just cleanup
 
 otel:
-	doppler run --command 'docker run -v $(pwd)/otel-config.yaml:/etc/otel-config.yaml -e OTEL_SERVICE_NAME=$OTEL_SERVICE_NAME -e APP_HONEYCOMB_API_KEY=$APP_HONEYCOMB_API_KEY otel/opentelemetry-collector-contrib:0.81.0'
+  #!/usr/bin/env bash
+  set -euxo pipefail
+  doppler run --command "envsubst < otel_collector_config.template.yaml > otel_collector_config.yaml"
+  doppler run --command "docker run -p 14268:14268 -p 4317-4318:4317-4318 -v $(pwd)/otel_collector_config.yaml:/etc/otelcol-contrib/config.yaml otel/opentelemetry-collector-contrib:0.81.0"
 
 # 🧪 Run test suite locally
 test:
