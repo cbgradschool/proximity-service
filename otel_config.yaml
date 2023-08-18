@@ -2,12 +2,12 @@ exporters:
   otlp:
     endpoint: "api.honeycomb.io:443"
     headers:
-      "x-honeycomb-team": ${APP_HONEYCOMB_API_KEY}
+      "x-honeycomb-team": ${env:APP_HONEYCOMB_API_KEY}
   otlp/metrics:
     endpoint: "api.honeycomb.io:443"
     headers:
-      "x-honeycomb-team": ${APP_HONEYCOMB_API_KEY}
-      "x-honeycomb-dataset": ${OTEL_SERVICE_NAME}
+      "x-honeycomb-team": ${env:APP_HONEYCOMB_API_KEY}
+      "x-honeycomb-dataset": ${env:OTEL_SERVICE_NAME}
   logging:
     loglevel: info
 receivers:

@@ -7,8 +7,6 @@ DB_NAME := "proximity_service"
 DB_HOST := "localhost"
 DB_CONTAINER_NAME := "postgres"
 DB_PORT := "5432"
-OTEL_SERVICE_NAME := env_var_or_default("OTEL_SERVICE_NAME", "THING")
-APP_HONEYCOMB_API_KEY := env_var_or_default("APP_HONEYCOMB_API_KEY", "THING")
 
 _init-db:
 	docker run \
@@ -32,11 +30,21 @@ wait-for:
 run: _init-db wait-for _run-migrations
 	doppler run --command="RUST_BACKTRACE=1 cargo watch -x check -x run"; just cleanup
 
+# otel:
+# 	doppler run -- docker run \
+# 		-e APP_HONEYCOMB_API_KEY \
+# 		-e OTEL_SERVICE_NAME \
+# 		-p 4317-4318:4317-4318 \
+# 		-v $(pwd)/otel_collector_config.yaml:/etc/otelcol-contrib/config.yaml \
+# 		otel/opentelemetry-collector-contrib:0.81.0
 otel:
-  #!/usr/bin/env bash
-  set -euxo pipefail
-  doppler run --command "envsubst < otel_collector_config.template.yaml > otel_collector_config.yaml"
-  doppler run --command "docker run -p 14268:14268 -p 4317-4318:4317-4318 -v $(pwd)/otel_collector_config.yaml:/etc/otelcol-contrib/config.yaml otel/opentelemetry-collector-contrib:0.81.0"
+	doppler run -- docker run \
+		-e APP_HONEYCOMB_API_KEY \
+		-e OTEL_SERVICE_NAME \
+		-p 4317-4318:4317-4318 \
+		-v $(pwd)/otel_config.yaml:/app/otel_config.yaml \
+		ghcr.io/lalilul3lo/otel-collector:v0.3.0
+
 
 # 🧪 Run test suite locally
 test:
